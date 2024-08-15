@@ -1,6 +1,8 @@
 # 30X
 This script provides various ways to create HTTP redirects from 301 to 308, useful for stuff like SSRF
 
+## Live version at: https://30x.dexter0us.com/
+
 ---
 This tool is made to be used as a cloud function for Cloudflare Workers with minimum cold start duration and latency.
 
@@ -28,4 +30,4 @@ cd example-worker
 wrangler deploy
 ```
 
-Make sure the index.js is in the root or properly configured.
+Make sure the `index.js` is in the root or properly configured.
