@@ -46,7 +46,7 @@ addEventListener('fetch', event => {
   
   function generateHTML(errorMessage) {
     const errorBanner = errorMessage
-      ? `<div style="background-color: #f8d7da; color: #721c24; padding: 10px; margin-bottom: 15px; border-radius: 4px;">
+      ? `<div class="disclaimer">
            Error: ${errorMessage}
          </div>`
       : '';
