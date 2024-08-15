@@ -2,6 +2,7 @@
 This script provides various ways to create HTTP redirects from 301 to 308, useful for stuff like SSRF
 
 ---
+This tool is made to be used as a cloud function for Cloudflare Workers with minimum cold start duration and latency.
 
 ### How to install on your custom domain.
 1. Install Wrangler: Cloudflare's CLI tool.
