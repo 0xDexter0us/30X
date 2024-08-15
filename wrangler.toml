@@ -1,0 +1,9 @@
+#:schema node_modules/wrangler/config-schema.json
+name = "30x"
+main = "src/index.js"
+compatibility_date = "2024-08-06"
+compatibility_flags = ["nodejs_compat"]
+account_id = "Log in to the Cloudflare Dashboard > Select the domain > In the right sidebar, scroll down to the \"API\" section > Your Account ID will be displayed there."
+routes = [
+  { pattern = "example.com", custom_domain = true }
+]
