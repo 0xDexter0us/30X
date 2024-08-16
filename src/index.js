@@ -1,61 +1,90 @@
 addEventListener('fetch', event => {
-    event.respondWith(handleRequest(event.request))
+	event.respondWith(handleRequest(event.request))
   })
   
   async function handleRequest(request) {
-    const url = new URL(request.url)
-    const pathSegments = url.pathname.split('/')
+	if (request.method === 'OPTIONS') {
+	  return new Response(null, {
+		headers: {
+		  'Access-Control-Allow-Origin': '*',
+		  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS, PUT, HEAD, DELETE',
+		  'Access-Control-Allow-Headers': '*',
+		},
+	  })
+	}
   
-    let statusCode, targetUrl, errorMessage
+	const url = new URL(request.url)
+	const pathSegments = url.pathname.split('/')
   
-    if (pathSegments.length >= 3) {
-      statusCode = parseInt(pathSegments[1])
-      targetUrl = pathSegments.slice(2).join('/')
-    }
+	let statusCode, targetUrl, errorMessage
   
-    if (!statusCode || !targetUrl) {
-      const params = url.searchParams
-      statusCode = parseInt(params.get('code')) || statusCode
-      targetUrl = params.get('target') || targetUrl
-      const b64target = params.get('b64target')
-      if (b64target) {
-        try {
-          targetUrl = atob(b64target)
-        } catch (e) {
-          errorMessage = 'Invalid base64 encoded target'
-        }
-      }
-    }
+	if (pathSegments.length >= 3) {
+	  statusCode = parseInt(pathSegments[1])
+	  targetUrl = pathSegments.slice(2).join('/')
+	}
   
-    if ([301, 302, 303, 307, 308].includes(statusCode) && targetUrl) {
-      if (!targetUrl.match(/^[a-zA-Z]+:\/\//)) {
-        targetUrl = 'http://' + targetUrl
-      }
-      return Response.redirect(targetUrl, statusCode)
-    }
-
-    if (url.pathname !== '/' || url.search !== '') {
-      errorMessage = 'Invalid redirect request'
-    }
+	if (!statusCode || !targetUrl) {
+	  const params = url.searchParams
+	  statusCode = parseInt(params.get('code')) || statusCode
+	  targetUrl = params.get('target') || targetUrl
   
-    return new Response(generateHTML(errorMessage), {
-      headers: { 'Content-Type': 'text/html' },
-      status: errorMessage ? 400 : 200
-    })
+	  if (targetUrl) {
+		try {
+		  const decoded = atob(targetUrl)
+		  if (decoded.length > 0 && /^[\x00-\x7F]*$/.test(decoded)) {
+			targetUrl = decoded
+		  }
+		} catch (e) {
+		  // If decoding fails, assume it's not base64
+		}
+	  }
+	}
+  
+	if ([301, 302, 303, 307, 308].includes(statusCode) && targetUrl) {
+	  if (!targetUrl.match(/^[a-zA-Z]+:\/\//)) {
+		targetUrl = 'http://' + targetUrl
+	  }
+	  return new Response(null, {
+		status: statusCode,
+		headers: {
+		  'Location': targetUrl,
+		  'Access-Control-Allow-Origin': '*',
+		  'Access-Control-Allow-Headers': '*',
+		  'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+		  'Pragma': 'no-cache',
+		  'Expires': '0'
+		}
+	  })
+	}
+  
+	if (url.pathname !== '/' || url.search !== '') {
+	  errorMessage = 'Invalid redirect request'
+	}
+  
+	return new Response(generateHTML(errorMessage), {
+	  headers: {
+		'Content-Type': 'text/html',
+		'Access-Control-Allow-Origin': '*',
+		'Access-Control-Allow-Headers': '*',
+		'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+		'Pragma': 'no-cache',
+		'Expires': '0'
+	  },
+	  status: errorMessage ? 400 : 200
+	})
   }
   
   function generateHTML(errorMessage) {
-    const errorBanner = errorMessage
-      ? `<div class="disclaimer">
-           Error: ${errorMessage}
-         </div>`
-      : '';
+	const errorBanner = errorMessage
+	  ? `<div class="disclaimer">
+		   Error: ${errorMessage}
+		 </div>`
+	  : '';
   
-    return `
-<!DOCTYPE html>
-<html lang="en">
-
-<head>
+	return `
+  <!DOCTYPE html>
+  <html lang="en">
+	<head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>30X Redirects</title>
@@ -212,9 +241,9 @@ addEventListener('fetch', event => {
         </div>
 
         <h3>Base64 Encoded Target</h3>
-        <p>Format: <code>?code=[STATUS_CODE]&b64target=[BASE64_ENCODED_URL]</code></p>
+        <p>Format: <code>?code=[STATUS_CODE]&target=[BASE64_ENCODED_URL]</code></p>
         <div class="highlight">
-            <pre><code>https://30x.dexter0us.com/?code=307&b64target=aHR0cHM6Ly9leGFtcGxlLmNvbQ==</code></pre>
+            <pre><code>https://30x.dexter0us.com/?code=307&target=aHR0cHM6Ly9leGFtcGxlLmNvbQ==</code></pre>
         </div>
 
         <h3>Additional Usage Examples</h3>
@@ -226,7 +255,7 @@ addEventListener('fetch', event => {
 
         <h3>Using Base64 Without Protocol</h3>
         <div class="highlight">
-            <pre><code>https://30x.dexter0us.com/?code=308&b64target=ZXhhbXBsZS5jb20=</code></pre>
+            <pre><code>https://30x.dexter0us.com/?code=308&target=ZXhhbXBsZS5jb20=</code></pre>
         </div>
         <blockquote>
             <p>Note: If no protocol is specified, http:// will be added automatically.</p>
@@ -274,4 +303,4 @@ https://30x.dexter0us.com/302/gopher://gopher.example.com</code></pre>
 </body>
 </html>
   `
-}
+  }
